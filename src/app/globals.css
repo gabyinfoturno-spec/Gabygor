@@ -1,0 +1,205 @@
+/* ============================================
+   Turnero App – Global Styles
+   Sistema de turnos para barbería premium
+   ============================================ */
+
+@import "tailwindcss";
+@import "sweetalert2/dist/sweetalert2.min.css";
+
+/* ----------------------------------------
+   Tailwind v4 Theme (CSS-first config)
+   ---------------------------------------- */
+@theme {
+  /* Paleta dorada – tonos principales */
+  --color-gold-50: #FAF6EB;
+  --color-gold-100: #F0E6C8;
+  --color-gold-200: #E4D3A0;
+  --color-gold-300: #D4B96E;
+  --color-gold-400: #C8A960;
+  --color-gold-500: #B8944A;
+  --color-gold-600: #A08040;
+  --color-gold-700: #7D6432;
+  --color-gold-800: #5C4A25;
+  --color-gold-900: #3D3118;
+
+  /* Tipografías */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Animaciones reutilizables */
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-up: slide-up 0.4s ease-out;
+  --animate-slide-down: slide-down 0.3s ease-out;
+  --animate-scale-in: scale-in 0.2s ease-out;
+  --animate-shimmer: shimmer 2s infinite;
+  --animate-spin-slow: spin 1.2s linear infinite;
+  --animate-toast-in: toast-in 0.35s ease-out;
+  --animate-toast-out: toast-out 0.3s ease-in forwards;
+}
+
+/* ----------------------------------------
+   Keyframes
+   ---------------------------------------- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+
+/* ----------------------------------------
+   CSS Custom Properties – Light mode
+   ---------------------------------------- */
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8F8F6;
+  --bg-tertiary: #F0EDE5;
+
+  --text-primary: #111111;
+  --text-secondary: #4A4A4A;
+  --text-tertiary: #727272;
+  --text-muted: #727272;
+
+  --border-color: #E5E2DA;
+  --border-hover: #D5D0C6;
+  --border-primary: #E5E2DA;
+
+  --gold-primary: #C8A960;
+  --gold-light: #FAF6EB;
+  --gold-glow: rgba(200, 169, 96, 0.25);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-gold: 0 4px 16px rgba(200, 169, 96, 0.15);
+
+  --overlay: rgba(0, 0, 0, 0.4);
+}
+
+/* ----------------------------------------
+   CSS Custom Properties – Dark mode
+   ---------------------------------------- */
+.dark {
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #141416;
+  --bg-tertiary: #1E1E22;
+
+  --text-primary: #F5F5F3;
+  --text-secondary: #9B9B9B;
+  --text-tertiary: #6B6B6B;
+  --text-muted: #6B6B6B;
+
+  --border-color: #2A2A2E;
+  --border-hover: #3A3A40;
+  --border-primary: #2A2A2E;
+
+  --gold-primary: #D4B96E;
+  --gold-light: #1E1A10;
+  --gold-glow: rgba(212, 185, 110, 0.2);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-gold: 0 4px 16px rgba(212, 185, 110, 0.12);
+
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* ----------------------------------------
+   Base Styles
+   ---------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Headings usan Playfair Display */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* ----------------------------------------
+   Scrollbar personalizada
+   ---------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
+}
+
+/* ----------------------------------------
+   Focus visible – accesibilidad
+   ---------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------
+   Utilidades extra
+   ---------------------------------------- */
+.text-balance {
+  text-wrap: balance;
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #C8A960 0%, #D4B96E 50%, #E4D3A0 100%);
+}
+
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+}
