@@ -33,18 +33,22 @@ export function BookingConfirmation({
   const accessUrl = `/mis-turnos/${accessToken}`
   const totalPrice = services.reduce((sum, s) => sum + Number(s.price), 0)
 
+  const [loadingSettings, setLoadingSettings] = useState(true)
   const [mpEnabled, setMpEnabled] = useState(false)
   const [loadingMp, setLoadingMp] = useState(false)
   const [paidOnSite, setPaidOnSite] = useState(false)
 
-  // Verificar si MP está habilitado
+  // Verificar si MP está habilitado (bypasseando caché)
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         setMpEnabled(data.mp_payments_enabled === 'true')
       })
       .catch(() => {})
+      .finally(() => {
+        setLoadingSettings(false)
+      })
   }, [])
 
   const handlePayWithMP = async () => {
@@ -183,7 +187,11 @@ export function BookingConfirmation({
       </div>
 
       {/* Sección de pago con Mercado Pago */}
-      {mpEnabled && !paidOnSite && (
+      {loadingSettings ? (
+        <div className="flex items-center justify-center py-6">
+          <span className="h-6 w-6 rounded-full border-2 border-t-[var(--gold-primary)] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+        </div>
+      ) : mpEnabled && !paidOnSite ? (
         <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 text-left space-y-4">
           <div className="flex items-center gap-2">
             {/* Logo MP */}
@@ -231,10 +239,7 @@ export function BookingConfirmation({
             </button>
           </div>
         </div>
-      )}
-
-      {/* Acciones finales — se muestran si MP está desactivado o el usuario eligió pagar en el momento */}
-      {(!mpEnabled || paidOnSite) && (
+      ) : (
         <div className="flex flex-col gap-3">
           <Button
             variant="primary"
