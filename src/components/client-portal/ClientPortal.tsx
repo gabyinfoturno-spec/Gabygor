@@ -57,6 +57,20 @@ export function ClientPortal({ client }: ClientPortalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client.accessToken])
 
+  // Interceptar la navegación del botón 'Atrás' del navegador/gesto para ir al home
+  useEffect(() => {
+    const handlePopState = () => {
+      window.location.href = '/'
+    }
+
+    window.history.pushState({ page: 'mis-turnos' }, '', window.location.href)
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [])
+
   // Filter appointments
   const upcoming = appointments.filter(
     (app) => app.status === 'pending' || app.status === 'confirmed'
@@ -76,16 +90,29 @@ export function ClientPortal({ client }: ClientPortalProps) {
     <div className="flex min-h-screen flex-col bg-[var(--bg-secondary)] text-[var(--text-primary)]">
       {/* Header */}
       <header className="border-b border-[var(--border-color)] bg-[var(--bg-primary)] py-6 shadow-sm">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 sm:px-6">
-          <div className="space-y-0.5">
-            <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold tracking-tight text-[var(--gold-primary)] sm:text-3xl">
-              Hola, {client.fullName.split(' ')[0]}
-            </h1>
-            <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-              Gestioná tus turnos
-            </p>
+        <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-2 text-xs font-semibold text-[var(--text-primary)] hover:border-[var(--gold-primary)] hover:bg-[var(--bg-primary)] transition-all shadow-sm"
+              >
+                <svg className="h-4 w-4 text-[var(--gold-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Volver al inicio</span>
+              </button>
+            </Link>
+            <div className="space-y-0.5">
+              <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold tracking-tight text-[var(--gold-primary)] sm:text-3xl">
+                Hola, {client.fullName.split(' ')[0]}
+              </h1>
+              <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
+                Gestioná tus turnos
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-end sm:self-auto">
             <Link href="/">
               <Button variant="outline" size="sm">
                 + Reservar
