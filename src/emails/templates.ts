@@ -516,7 +516,7 @@ export function mpPaymentReceiptHtml(params: {
   accessUrl: string;
 }) {
   return layout(`
-    <h2>¡Hola ${params.clientName}! 💳</h2>
+    <h2>¡Hola ${params.clientName}!</h2>
     <p>Tu pago fue recibido con éxito. Tu turno está confirmado y pagado.</p>
     <div class="detail-box">
       <p class="detail-label">Servicio</p>
@@ -549,7 +549,7 @@ export function mpPaymentAdminNotificationHtml(params: {
   mpPaymentId: string;
 }) {
   return layout(`
-    <h2>💳 Pago recibido via Mercado Pago</h2>
+    <h2>Pago recibido via Mercado Pago</h2>
     <p>Un cliente pagó su turno anticipadamente.</p>
     <div class="detail-box">
       <p class="detail-label">Cliente</p>

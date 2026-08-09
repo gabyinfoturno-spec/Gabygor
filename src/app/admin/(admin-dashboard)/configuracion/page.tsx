@@ -441,7 +441,12 @@ export default function AdminSettingsPage() {
 
             {mpPaymentsEnabled ? (
               <div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-800 dark:text-green-300">
-                <p className="font-semibold mb-1">✅ Mercado Pago activo</p>
+                <div className="flex items-center gap-1.5 font-semibold mb-1">
+                  <svg className="h-4 w-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Mercado Pago activo</span>
+                </div>
                 <p className="text-xs">Los clientes podrán elegir pagar su turno anticipadamente al confirmar la reserva. Los pagos se acreditan directamente en tu cuenta de Mercado Pago.</p>
               </div>
             ) : (

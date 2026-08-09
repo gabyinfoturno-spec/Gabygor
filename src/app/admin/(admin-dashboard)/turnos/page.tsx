@@ -33,29 +33,37 @@ interface AdminAppointment extends Appointment {
 function PaymentBadge({ status }: { status?: string }) {
   if (!status || status === 'pending') return null
 
-  const config: Record<string, { label: string; className: string }> = {
-    paid: {
-      label: '💳 Pagado MP',
-      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    },
-    pay_on_site: {
-      label: '🏪 Paga en local',
-      className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    },
-    refunded: {
-      label: '↩ Devuelto',
-      className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-    },
+  if (status === 'paid') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+        Pagado MP
+      </span>
+    )
   }
-
-  const c = config[status]
-  if (!c) return null
-
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.className}`}>
-      {c.label}
-    </span>
-  )
+  if (status === 'pay_on_site') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h6m-6 4h6m-6 4h6" />
+        </svg>
+        Paga en local
+      </span>
+    )
+  }
+  if (status === 'refunded') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+        </svg>
+        Devuelto
+      </span>
+    )
+  }
+  return null
 }
 
 export default function AdminAppointmentsPage() {
@@ -362,9 +370,12 @@ export default function AdminAppointmentsPage() {
                     onClick={() => handleRefund(app)}
                     loading={refundLoadingId === app.id}
                     disabled={actionLoadingId !== null || (refundLoadingId !== null && refundLoadingId !== app.id)}
-                    className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900/20"
+                    className="flex items-center gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900/20"
                   >
-                    ↩ Devolver pago MP
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                    Devolver pago MP
                   </Button>
                 )}
               </div>

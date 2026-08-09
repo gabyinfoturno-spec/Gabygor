@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       emailPromises.push(
         sendEmail({
           to: barberEmail,
-          subject: `💳 Pago recibido: ${client?.full_name || 'Cliente'} — ${serviceName}`,
+          subject: `Pago recibido: ${client?.full_name || 'Cliente'} — ${serviceName}`,
           html: mpPaymentAdminNotificationHtml({
             clientName: client?.full_name || 'Cliente',
             clientEmail: client?.email || '',
