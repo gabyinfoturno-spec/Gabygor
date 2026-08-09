@@ -324,8 +324,8 @@ export async function GET(request: NextRequest) {
         clients (id, full_name, email, phone),
         services (id, name, price, duration_minutes)
       `)
-      .order('appointment_date', { ascending: true })
-      .order('start_time', { ascending: true })
+      .order('appointment_date', { ascending: false })
+      .order('start_time', { ascending: false })
 
     if (status) {
       query = query.eq('status', status)
