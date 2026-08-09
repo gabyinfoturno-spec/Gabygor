@@ -9,7 +9,20 @@ function PaymentResultContent() {
   const status = searchParams.get('status')
   const appointmentId = searchParams.get('appointment_id')
 
+  const paymentId = searchParams.get('payment_id') || searchParams.get('collection_id')
   const [accessUrl, setAccessUrl] = useState<string | null>(null)
+
+  // Confirmar el pago en tiempo real con la API de MP si viene el payment_id
+  useEffect(() => {
+    if (!paymentId) return
+    fetch('/api/payments/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentId }),
+    })
+      .then((r) => r.json())
+      .catch((err) => console.error('[pago/resultado] Confirm error:', err))
+  }, [paymentId])
 
   // Recuperar el access_token para el link de "Ver mis turnos"
   useEffect(() => {
