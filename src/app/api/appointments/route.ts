@@ -318,6 +318,9 @@ export async function GET(request: NextRequest) {
         notes,
         created_at,
         additional_services,
+        payment_status,
+        mp_payment_id,
+        paid_at,
         clients (id, full_name, email, phone),
         services (id, name, price, duration_minutes)
       `)

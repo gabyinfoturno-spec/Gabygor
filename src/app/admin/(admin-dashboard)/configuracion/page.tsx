@@ -31,6 +31,9 @@ export default function AdminSettingsPage() {
   const [reminderHours, setReminderHours] = useState('24')
   const [allowSameDayBooking, setAllowSameDayBooking] = useState(true)
 
+  // Payments
+  const [mpPaymentsEnabled, setMpPaymentsEnabled] = useState(false)
+
   const { toast } = useToast()
   const [loadingNotify, setLoadingNotify] = useState<string | null>(null)
 
@@ -72,6 +75,7 @@ export default function AdminSettingsPage() {
           max_days_advance_booking: maxDays,
           reminder_hours_before: reminderHours,
           allow_same_day_booking: String(allowSameDayBooking),
+          mp_payments_enabled: String(mpPaymentsEnabled),
         }),
       })
 
@@ -134,6 +138,7 @@ export default function AdminSettingsPage() {
       setMaxDays(data.max_days_advance_booking || '30')
       setReminderHours(data.reminder_hours_before || '24')
       setAllowSameDayBooking(data.allow_same_day_booking !== 'false')
+      setMpPaymentsEnabled(data.mp_payments_enabled === 'true')
     } catch (err) {
       console.error(err)
       setError('No se pudieron cargar las configuraciones.')
@@ -170,6 +175,7 @@ export default function AdminSettingsPage() {
           max_days_advance_booking: maxDays,
           reminder_hours_before: reminderHours,
           allow_same_day_booking: String(allowSameDayBooking),
+          mp_payments_enabled: String(mpPaymentsEnabled),
         }),
       })
 
@@ -417,6 +423,32 @@ export default function AdminSettingsPage() {
                 label="Permitir reservar turnos para el mismo día actual (solo horarios futuros)"
               />
             </div>
+          </Card>
+
+          {/* Medios de Pago Card */}
+          <Card padding="md" className="space-y-4">
+            <h3 className="font-heading text-lg font-bold text-[var(--text-primary)] border-b border-[var(--border-color)] pb-2">
+              Medios de Pago
+            </h3>
+
+            <div className="flex items-start gap-3 py-1">
+              <Toggle
+                checked={mpPaymentsEnabled}
+                onChange={setMpPaymentsEnabled}
+                label="Activar pago anticipado con Mercado Pago"
+              />
+            </div>
+
+            {mpPaymentsEnabled ? (
+              <div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-800 dark:text-green-300">
+                <p className="font-semibold mb-1">✅ Mercado Pago activo</p>
+                <p className="text-xs">Los clientes podrán elegir pagar su turno anticipadamente al confirmar la reserva. Los pagos se acreditan directamente en tu cuenta de Mercado Pago.</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 text-sm text-[var(--text-secondary)]">
+                <p className="text-xs">Cuando está desactivado, el flujo de reserva sigue igual que antes. Los clientes pagan directamente en el momento del servicio.</p>
+              </div>
+            )}
           </Card>
 
           {/* Save Button */}

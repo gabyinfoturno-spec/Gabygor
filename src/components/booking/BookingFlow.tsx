@@ -94,6 +94,7 @@ export function BookingFlow() {
             slot={state.selectedSlot}
             clientEmail={state.clientEmail}
             accessToken={confirmedBooking.accessToken}
+            appointmentId={confirmedBooking.appointmentId}
             onReset={reset}
           />
         )}

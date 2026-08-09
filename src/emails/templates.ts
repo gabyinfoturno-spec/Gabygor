@@ -19,7 +19,9 @@ const baseStyles = `
   .detail-label { color: #666666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
   .detail-value { color: #111111; font-size: 16px; font-weight: 600; }
   .btn { display: inline-block; padding: 14px 28px; background-color: #C8A960; color: #111111; text-decoration: none; font-weight: 600; border-radius: 4px; margin-top: 16px; }
+  .btn-mp { display: inline-block; padding: 14px 28px; background-color: #009EE3; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 4px; margin-top: 16px; }
   .footer { padding: 24px 32px; background-color: #f5f5f5; text-align: center; color: #999999; font-size: 12px; }
+  .badge-paid { display: inline-block; background-color: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 600; }
 `;
 
 function layout(content: string): string {
@@ -498,3 +500,103 @@ export function individualEmailHtml(params: {
   `);
 }
 
+// ============================================================
+// MERCADO PAGO — Plantillas de email
+// ============================================================
+
+/**
+ * Email al cliente confirmando que su pago via MP fue recibido.
+ */
+export function mpPaymentReceiptHtml(params: {
+  clientName: string;
+  serviceName: string;
+  date: string;
+  time: string;
+  amount: string;
+  accessUrl: string;
+}) {
+  return layout(`
+    <h2>¡Hola ${params.clientName}! 💳</h2>
+    <p>Tu pago fue recibido con éxito. Tu turno está confirmado y pagado.</p>
+    <div class="detail-box">
+      <p class="detail-label">Servicio</p>
+      <p class="detail-value">${params.serviceName}</p>
+      <p class="detail-label">Fecha</p>
+      <p class="detail-value">${params.date}</p>
+      <p class="detail-label">Hora</p>
+      <p class="detail-value">${params.time}</p>
+      <p class="detail-label">Monto pagado</p>
+      <p class="detail-value" style="color: #059669;">${params.amount}</p>
+    </div>
+    <p>Podés ver los detalles de tu turno desde tu portal:</p>
+    <a href="${params.accessUrl}" class="btn">Ver mis turnos</a>
+    <p style="margin-top: 24px; font-size: 13px; color: #666;">
+      ¡Gracias por confiar en ${APP_NAME}!
+    </p>
+  `);
+}
+
+/**
+ * Email al admin cuando un cliente paga via MP (notificado por webhook).
+ */
+export function mpPaymentAdminNotificationHtml(params: {
+  clientName: string;
+  clientEmail: string;
+  serviceName: string;
+  date: string;
+  time: string;
+  amount: string;
+  mpPaymentId: string;
+}) {
+  return layout(`
+    <h2>💳 Pago recibido via Mercado Pago</h2>
+    <p>Un cliente pagó su turno anticipadamente.</p>
+    <div class="detail-box">
+      <p class="detail-label">Cliente</p>
+      <p class="detail-value">${params.clientName}</p>
+      <p class="detail-label">Email</p>
+      <p class="detail-value">${params.clientEmail}</p>
+      <p class="detail-label">Servicio</p>
+      <p class="detail-value">${params.serviceName}</p>
+      <p class="detail-label">Fecha del turno</p>
+      <p class="detail-value">${params.date}</p>
+      <p class="detail-label">Hora</p>
+      <p class="detail-value">${params.time}</p>
+      <p class="detail-label">Monto acreditado</p>
+      <p class="detail-value" style="color: #059669; font-size: 20px;">${params.amount}</p>
+      <p class="detail-label">ID de pago MP</p>
+      <p class="detail-value" style="font-size: 13px; color: #666;">${params.mpPaymentId}</p>
+    </div>
+    <p style="font-size: 13px; color: #666;">
+      El pago ya fue acreditado en tu cuenta de Mercado Pago.<br>
+      En caso de cancelación, podés realizar la devolución desde el panel de administración o directamente desde mercadopago.com.ar.
+    </p>
+  `);
+}
+
+/**
+ * Email al cliente cuando se devuelve su pago via MP.
+ */
+export function mpRefundClientHtml(params: {
+  clientName: string;
+  serviceName: string;
+  date: string;
+  amount: string;
+}) {
+  return layout(`
+    <h2>Hola ${params.clientName}</h2>
+    <p>El reembolso de tu pago fue procesado exitosamente.</p>
+    <div class="detail-box">
+      <p class="detail-label">Servicio</p>
+      <p class="detail-value">${params.serviceName}</p>
+      <p class="detail-label">Fecha del turno</p>
+      <p class="detail-value">${params.date}</p>
+      <p class="detail-label">Monto devuelto</p>
+      <p class="detail-value" style="color: #2563eb;">${params.amount}</p>
+    </div>
+    <p style="font-size: 13px; color: #666;">
+      El monto será acreditado en tu medio de pago original en los próximos días hábiles según Mercado Pago.<br>
+      Si tenés dudas, podés contactarte con nosotros.
+    </p>
+  `);
+}

@@ -1,7 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
-import { formatDate, formatTime } from '@/lib/utils'
+import { formatDate, formatTime, formatPrice } from '@/lib/utils'
 import type { Service } from '@/lib/types'
 
 // --- Props ---
@@ -12,12 +13,13 @@ interface BookingConfirmationProps {
   slot: { start: string; end: string }
   clientEmail: string
   accessToken: string
+  appointmentId: string
   onReset: () => void
 }
 
 /**
  * Pantalla de éxito después de confirmar un turno.
- * Muestra checkmark animado, resumen y acciones.
+ * Muestra checkmark animado, resumen del turno y opción de pago con MP (si está habilitado).
  */
 export function BookingConfirmation({
   services,
@@ -25,9 +27,47 @@ export function BookingConfirmation({
   slot,
   clientEmail,
   accessToken,
+  appointmentId,
   onReset,
 }: BookingConfirmationProps) {
   const accessUrl = `/mis-turnos/${accessToken}`
+  const totalPrice = services.reduce((sum, s) => sum + Number(s.price), 0)
+
+  const [mpEnabled, setMpEnabled] = useState(false)
+  const [loadingMp, setLoadingMp] = useState(false)
+  const [paidOnSite, setPaidOnSite] = useState(false)
+
+  // Verificar si MP está habilitado
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        setMpEnabled(data.mp_payments_enabled === 'true')
+      })
+      .catch(() => {})
+  }, [])
+
+  const handlePayWithMP = async () => {
+    setLoadingMp(true)
+    try {
+      const res = await fetch('/api/payments/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.initPoint) {
+        throw new Error(data.error || 'Error al generar el link de pago')
+      }
+
+      window.location.href = data.initPoint
+    } catch (err) {
+      console.error('[BookingConfirmation] MP error:', err)
+      setLoadingMp(false)
+      alert('No se pudo generar el link de pago. Intentá de nuevo o pagá en el momento.')
+    }
+  }
 
   return (
     <div className="mx-auto max-w-md space-y-8 py-8 text-center">
@@ -111,6 +151,13 @@ export function BookingConfirmation({
               {formatTime(slot.start)} — {formatTime(slot.end)}
             </span>
           </div>
+          <div className="border-t border-[var(--border-color)]" />
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[var(--text-secondary)]">Total</span>
+            <span className="text-xl font-bold text-[var(--gold-primary)]">
+              {formatPrice(totalPrice)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -135,20 +182,73 @@ export function BookingConfirmation({
         </p>
       </div>
 
-      {/* Acciones */}
-      <div className="flex flex-col gap-3">
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          onClick={() => (window.location.href = accessUrl)}
-        >
-          Ver mis turnos
-        </Button>
-        <Button variant="outline" size="lg" fullWidth onClick={onReset}>
-          Reservar otro turno
-        </Button>
-      </div>
+      {/* Sección de pago con Mercado Pago */}
+      {mpEnabled && !paidOnSite && (
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 text-left space-y-4">
+          <div className="flex items-center gap-2">
+            {/* Logo MP */}
+            <svg className="h-6 w-6 flex-shrink-0" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="24" fill="#009EE3"/>
+              <path d="M13 24.5C13 18.149 18.149 13 24.5 13C30.851 13 36 18.149 36 24.5C36 30.851 30.851 36 24.5 36C18.149 36 13 30.851 13 24.5Z" fill="white"/>
+              <path d="M24.5 17C21.467 17 19 19.467 19 22.5V25.5H30V22.5C30 19.467 27.533 17 24.5 17Z" fill="#009EE3"/>
+            </svg>
+            <div>
+              <p className="font-semibold text-sm text-[var(--text-primary)]">
+                ¿Querés pagar tu turno ahora?
+              </p>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Pagá con tarjeta, débito o saldo de MP y asegurá tu cita
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handlePayWithMP}
+              disabled={loadingMp}
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#009EE3] px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loadingMp ? (
+                <>
+                  <span className="h-4 w-4 rounded-full border-2 border-t-white border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  Generando link...
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  Pagar {formatPrice(totalPrice)} con Mercado Pago
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setPaidOnSite(true)}
+              disabled={loadingMp}
+              className="w-full rounded-xl border border-[var(--border-color)] px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+            >
+              Pagar en el momento
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Acciones finales — se muestran si MP está desactivado o el usuario eligió pagar en el momento */}
+      {(!mpEnabled || paidOnSite) && (
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={() => (window.location.href = accessUrl)}
+          >
+            Ver mis turnos
+          </Button>
+          <Button variant="outline" size="lg" fullWidth onClick={onReset}>
+            Reservar otro turno
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

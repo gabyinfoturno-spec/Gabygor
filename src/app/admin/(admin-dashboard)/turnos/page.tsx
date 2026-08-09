@@ -24,6 +24,38 @@ interface AdminAppointment extends Appointment {
     price: number
     duration_minutes: number
   }
+  payment_status?: string
+  mp_payment_id?: string
+  paid_at?: string
+}
+
+/** Badge de estado de pago */
+function PaymentBadge({ status }: { status?: string }) {
+  if (!status || status === 'pending') return null
+
+  const config: Record<string, { label: string; className: string }> = {
+    paid: {
+      label: '💳 Pagado MP',
+      className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    },
+    pay_on_site: {
+      label: '🏪 Paga en local',
+      className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    },
+    refunded: {
+      label: '↩ Devuelto',
+      className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    },
+  }
+
+  const c = config[status]
+  if (!c) return null
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.className}`}>
+      {c.label}
+    </span>
+  )
 }
 
 export default function AdminAppointmentsPage() {
@@ -36,6 +68,7 @@ export default function AdminAppointmentsPage() {
   const [dateFilter, setDateFilter] = useState('')
   
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
+  const [refundLoadingId, setRefundLoadingId] = useState<string | null>(null)
   const [reschedulingApp, setReschedulingApp] = useState<AdminAppointment | null>(null)
   const { toast } = useToast()
 
@@ -65,10 +98,15 @@ export default function AdminAppointmentsPage() {
   }, [statusFilter, dateFilter])
 
   const handleAction = async (id: string, action: 'complete' | 'no_show' | 'cancel') => {
+    const app = appointments.find((a) => a.id === id)
+
     if (action === 'cancel') {
+      const hasPaid = app?.payment_status === 'paid'
       const result = await Swal.fire({
         title: '¿Cancelar turno?',
-        text: '¿Estás seguro de que querés cancelar este turno? Esta acción no se puede deshacer.',
+        html: hasPaid
+          ? '<p>¿Estás seguro? <strong>Este cliente pagó con Mercado Pago.</strong><br>Podés devolver el pago desde el panel después de cancelar o hacerlo directamente desde mercadopago.com.ar.</p>'
+          : '¿Estás seguro de que querés cancelar este turno? Esta acción no se puede deshacer.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -120,6 +158,43 @@ export default function AdminAppointmentsPage() {
       toast(err instanceof Error ? err.message : 'Error al procesar la acción.', 'error')
     } finally {
       setActionLoadingId(null)
+    }
+  }
+
+  const handleRefund = async (app: AdminAppointment) => {
+    const result = await Swal.fire({
+      title: '¿Devolver el pago?',
+      html: `<p>Se procesará la devolución total de <strong>${formatPrice(app.services?.price || 0)}</strong> al cliente <strong>${app.clients?.full_name}</strong> a través de Mercado Pago.</p><p style="font-size:13px;color:#666;margin-top:8px;">El monto se acreditará en el medio de pago original del cliente.</p>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#C8A960',
+      cancelButtonColor: '#1a1a1a',
+      confirmButtonText: 'Sí, devolver pago',
+      cancelButtonText: 'Cancelar',
+      background: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+    })
+
+    if (!result.isConfirmed) return
+
+    setRefundLoadingId(app.id)
+    try {
+      const res = await fetch('/api/payments/refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId: app.id }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al procesar la devolución')
+
+      toast('Devolución procesada correctamente. El cliente recibirá un email de confirmación.', 'success')
+      fetchAppointments()
+    } catch (err: unknown) {
+      console.error(err)
+      toast(err instanceof Error ? err.message : 'Error al procesar la devolución.', 'error')
+    } finally {
+      setRefundLoadingId(null)
     }
   }
 
@@ -206,11 +281,12 @@ export default function AdminAppointmentsPage() {
               className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold text-[var(--text-primary)]">
                     {app.clients?.full_name || 'Cliente'}
                   </span>
                   <Badge status={app.status} />
+                  <PaymentBadge status={app.payment_status} />
                 </div>
                 <div className="text-xs text-[var(--text-secondary)]">
                   {app.clients?.email} {app.clients?.phone ? `• ${app.clients.phone}` : ''}
@@ -226,46 +302,72 @@ export default function AdminAppointmentsPage() {
                     Hora: {formatTime(app.start_time)} — {formatTime(app.end_time)}
                   </span>
                 </div>
+
+                {/* Aviso de pago MP en turno cancelado */}
+                {app.status === 'cancelled' && app.payment_status === 'paid' && (
+                  <div className="flex items-center gap-2 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 text-xs text-orange-800 dark:text-orange-300">
+                    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Este cliente pagó con MP. Podés devolver el pago desde aquí o desde <strong>mercadopago.com.ar</strong>.</span>
+                  </div>
+                )}
               </div>
 
               {/* Admin Actions */}
-              {(app.status === 'pending' || app.status === 'confirmed') && (
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border-color)] sm:border-none sm:pt-0">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleAction(app.id, 'complete')}
-                    disabled={actionLoadingId !== null}
-                    loading={actionLoadingId === app.id}
-                  >
-                    Completar
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleAction(app.id, 'no_show')}
-                    disabled={actionLoadingId !== null}
-                  >
-                    Ausente
-                  </Button>
+              <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border-color)] sm:border-none sm:pt-0 sm:items-end">
+                {(app.status === 'pending' || app.status === 'confirmed') && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleAction(app.id, 'complete')}
+                      disabled={actionLoadingId !== null || refundLoadingId !== null}
+                      loading={actionLoadingId === app.id}
+                    >
+                      Completar
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleAction(app.id, 'no_show')}
+                      disabled={actionLoadingId !== null || refundLoadingId !== null}
+                    >
+                      Ausente
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReschedulingApp(app)}
+                      disabled={actionLoadingId !== null || refundLoadingId !== null}
+                    >
+                      Reprogramar
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleAction(app.id, 'cancel')}
+                      disabled={actionLoadingId !== null || refundLoadingId !== null}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
+
+                {/* Botón devolución MP */}
+                {app.payment_status === 'paid' && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setReschedulingApp(app)}
-                    disabled={actionLoadingId !== null}
+                    onClick={() => handleRefund(app)}
+                    loading={refundLoadingId === app.id}
+                    disabled={actionLoadingId !== null || (refundLoadingId !== null && refundLoadingId !== app.id)}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900/20"
                   >
-                    Reprogramar
+                    ↩ Devolver pago MP
                   </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleAction(app.id, 'cancel')}
-                    disabled={actionLoadingId !== null}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </Card>
           ))}
         </div>
