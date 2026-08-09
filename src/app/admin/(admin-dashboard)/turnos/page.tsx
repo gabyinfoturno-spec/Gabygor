@@ -206,6 +206,41 @@ export default function AdminAppointmentsPage() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: '¿Eliminar turno definitivamente?',
+      text: 'El turno se borrará por completo de la base de datos. Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#1a1a1a',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+    })
+
+    if (!result.isConfirmed) return
+
+    setActionLoadingId(id)
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar el turno')
+
+      toast('Turno eliminado correctamente.', 'success')
+      fetchAppointments()
+    } catch (err: unknown) {
+      console.error(err)
+      toast(err instanceof Error ? err.message : 'Error al eliminar el turno.', 'error')
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
   const handleResetFilters = () => {
     setStatusFilter('')
     setDateFilter('')
@@ -324,60 +359,77 @@ export default function AdminAppointmentsPage() {
 
               {/* Admin Actions */}
               <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border-color)] sm:border-none sm:pt-0 sm:items-end">
-                {(app.status === 'pending' || app.status === 'confirmed') && (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleAction(app.id, 'complete')}
-                      disabled={actionLoadingId !== null || refundLoadingId !== null}
-                      loading={actionLoadingId === app.id}
-                    >
-                      Completar
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleAction(app.id, 'no_show')}
-                      disabled={actionLoadingId !== null || refundLoadingId !== null}
-                    >
-                      Ausente
-                    </Button>
+                <div className="flex flex-wrap gap-2 items-center sm:justify-end">
+                  {(app.status === 'pending' || app.status === 'confirmed') && (
+                    <>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleAction(app.id, 'complete')}
+                        disabled={actionLoadingId !== null || refundLoadingId !== null}
+                        loading={actionLoadingId === app.id}
+                      >
+                        Completar
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleAction(app.id, 'no_show')}
+                        disabled={actionLoadingId !== null || refundLoadingId !== null}
+                      >
+                        Ausente
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReschedulingApp(app)}
+                        disabled={actionLoadingId !== null || refundLoadingId !== null}
+                      >
+                        Reprogramar
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleAction(app.id, 'cancel')}
+                        disabled={actionLoadingId !== null || refundLoadingId !== null}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Botón devolución MP */}
+                  {app.payment_status === 'paid' && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setReschedulingApp(app)}
-                      disabled={actionLoadingId !== null || refundLoadingId !== null}
+                      onClick={() => handleRefund(app)}
+                      loading={refundLoadingId === app.id}
+                      disabled={actionLoadingId !== null || (refundLoadingId !== null && refundLoadingId !== app.id)}
+                      className="flex items-center gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900/20"
                     >
-                      Reprogramar
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
+                      Devolver pago MP
                     </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleAction(app.id, 'cancel')}
-                      disabled={actionLoadingId !== null || refundLoadingId !== null}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                )}
+                  )}
 
-                {/* Botón devolución MP */}
-                {app.payment_status === 'paid' && (
+                  {/* Botón eliminar turno */}
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => handleRefund(app)}
-                    loading={refundLoadingId === app.id}
-                    disabled={actionLoadingId !== null || (refundLoadingId !== null && refundLoadingId !== app.id)}
-                    className="flex items-center gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900/20"
+                    onClick={() => handleDelete(app.id)}
+                    disabled={actionLoadingId !== null || refundLoadingId !== null}
+                    className="flex items-center gap-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
+                    title="Eliminar turno de la base de datos"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    Devolver pago MP
+                    Eliminar
                   </Button>
-                )}
+                </div>
               </div>
             </Card>
           ))}

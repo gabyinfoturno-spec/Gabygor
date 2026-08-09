@@ -358,3 +358,53 @@ export async function PATCH(
     )
   }
 }
+
+// ============================================================
+// DELETE /api/appointments/[id] — Eliminar turno (Admin)
+// ============================================================
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    if (!id) {
+      return NextResponse.json({ error: 'ID de turno es requerido' }, { status: 400 })
+    }
+
+    // 1. Check admin auth
+    const supabaseUser = await createClient()
+    const {
+      data: { user: adminUser },
+      error: authError,
+    } = await supabaseUser.auth.getUser()
+
+    if (authError || !adminUser) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const supabaseAdmin = createAdminClient()
+
+    // 2. Delete history logs referenced by appointment, then delete appointment
+    await supabaseAdmin.from('appointment_history').delete().eq('appointment_id', id)
+
+    const { error: deleteError } = await supabaseAdmin
+      .from('appointments')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) {
+      console.error('[API Appointment DELETE] Error:', deleteError)
+      return NextResponse.json({ error: 'Error al eliminar el turno' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, message: 'Turno eliminado' })
+  } catch (err) {
+    console.error('[API Appointment DELETE] Error inesperado:', err)
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
+  }
+}
