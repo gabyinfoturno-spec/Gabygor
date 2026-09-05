@@ -1,7 +1,5 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_EMAIL = 'notificacion@gabygor.com.ar';
 const FROM_NAME = process.env.FROM_NAME || 'GabyGor';
 
@@ -23,6 +21,9 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
       console.warn('[Email] RESEND_API_KEY no está configurada. El correo no se enviará.');
       return `mock_email_id_${Date.now()}`;
     }
+
+    // Crear el cliente de forma lazy para no fallar en build time
+    const resend = new Resend(apiKey);
 
     // Filtrar destinatarios para omitir 'admin@admin.com' (cuenta de prueba sin buzón real)
     const recipients = Array.isArray(to) ? to : [to];
