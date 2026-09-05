@@ -8,23 +8,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // 1. Detectar si hay un código de autorización OAuth en la URL que no esté en la ruta callback.
-  const code = request.nextUrl.searchParams.get('code');
-  if (code && !pathname.startsWith('/auth/callback')) {
-    const nextUrl = request.nextUrl.clone();
-    nextUrl.pathname = '/auth/callback';
-
-    const originalParams = new URLSearchParams(request.nextUrl.search);
-    originalParams.delete('code');
-
-    const nextPath =
-      pathname +
-      (originalParams.toString() ? `?${originalParams.toString()}` : '');
-    nextUrl.searchParams.set('code', code);
-    nextUrl.searchParams.set('next', nextPath);
-
-    return NextResponse.redirect(nextUrl);
-  }
 
   // 2. Proteger y manejar sesión únicamente en rutas /admin
   if (pathname.startsWith('/admin')) {
