@@ -1,6 +1,8 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const FROM_EMAIL = process.env.GMAIL_USER || '';
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM_EMAIL = 'notificacion@gabygor.com.ar';
 const FROM_NAME = process.env.FROM_NAME || 'GabyGor';
 
 interface SendEmailParams {
@@ -10,31 +12,15 @@ interface SendEmailParams {
 }
 
 /**
- * Crea el transporter de Nodemailer con Gmail SMTP.
- * Se crea de forma lazy para no fallar en build time.
- */
-function createTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-}
-
-/**
- * Envía un email a través de Gmail SMTP (Nodemailer).
- * Retorna el messageId del email o null si falló.
+ * Envía un email a través de Resend.
+ * Retorna el id del email o null si falló.
  */
 export async function sendEmail({ to, subject, html }: SendEmailParams): Promise<string | null> {
   try {
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    const apiKey = process.env.RESEND_API_KEY;
 
-    if (!gmailUser || !gmailPass) {
-      console.warn('[Email] GMAIL_USER o GMAIL_APP_PASSWORD no están configuradas. El correo no se enviará.');
-      // Devolver un ID ficticio para no romper los flujos en desarrollo local
+    if (!apiKey) {
+      console.warn('[Email] RESEND_API_KEY no está configurada. El correo no se enviará.');
       return `mock_email_id_${Date.now()}`;
     }
 
@@ -49,17 +35,20 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
       return `mock_email_id_skipped_${Date.now()}`;
     }
 
-    const transporter = createTransporter();
-
-    const info = await transporter.sendMail({
-      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
-      to: filteredRecipients.join(', '),
+    const { data, error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: filteredRecipients,
       subject,
       html,
     });
 
-    console.log('[Email] Enviado correctamente:', info.messageId);
-    return info.messageId ?? null;
+    if (error) {
+      console.error('[Email] Error de Resend:', error);
+      return null;
+    }
+
+    console.log('[Email] Enviado correctamente:', data?.id);
+    return data?.id ?? null;
   } catch (err) {
     console.error('[Email] Error al enviar:', err);
     return null;
