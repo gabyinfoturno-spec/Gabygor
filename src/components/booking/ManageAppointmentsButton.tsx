@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
+import type { ClientSession } from '@/lib/auth/session'
 
 export function ManageAppointmentsButton() {
-  const [session, setSession] = useState<unknown>(null)
+  const [session, setSession] = useState<ClientSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [redirecting, setRedirecting] = useState(false)
   const router = useRouter()
@@ -32,44 +32,24 @@ export function ManageAppointmentsButton() {
     }
   }
 
-  // 2. Check session and listen to changes for robust redirection after OAuth
+  // 2. Check session from custom JWT cookie
   useEffect(() => {
-    const supabase = createClient()
-
-    // Function to handle the pending redirect if a session is present
-    const handlePendingAction = (activeSession: unknown) => {
-      if (!activeSession) return
-      const pendingAction = localStorage.getItem('gabygor_action_after_auth')
-      if (pendingAction === 'view_appointments') {
-        localStorage.removeItem('gabygor_action_after_auth')
-        setRedirecting(true)
-        setTimeout(async () => {
-          await redirectToClientPortal()
-        }, 100)
-      }
-    }
-
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session: activeSession } }) => {
-      setSession(activeSession)
-      handlePendingAction(activeSession)
-      setLoading(false)
-    }).catch((err) => {
-      console.error('[ManageAppointmentsButton] Error checking session:', err)
-      setLoading(false)
-    })
-
-    // Listen to session changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, activeSession) => {
-      setSession(activeSession)
-      if (activeSession) {
-        handlePendingAction(activeSession)
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then(({ user }) => {
+        setSession(user || null)
+        // Si ya había una acción pendiente después del login OAuth
+        if (user) {
+          const pendingAction = localStorage.getItem('gabygor_action_after_auth')
+          if (pendingAction === 'view_appointments') {
+            localStorage.removeItem('gabygor_action_after_auth')
+            setRedirecting(true)
+            setTimeout(() => redirectToClientPortal(), 100)
+          }
+        }
+      })
+      .catch((err) => console.error('[ManageAppointmentsButton] Error checking session:', err))
+      .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -83,17 +63,7 @@ export function ManageAppointmentsButton() {
       setRedirecting(true)
       try {
         localStorage.setItem('gabygor_action_after_auth', 'view_appointments')
-        const supabase = createClient()
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-            queryParams: {
-              prompt: 'select_account',
-            },
-          },
-        })
-        if (error) throw error
+        window.location.href = '/api/auth/google?next=/'
       } catch (err: unknown) {
         console.error(err)
         toast('No se pudo iniciar sesión con Google. Intentá de nuevo.', 'error')

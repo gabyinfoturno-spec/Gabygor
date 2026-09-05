@@ -1,20 +1,18 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getClientSession } from '@/lib/auth/session'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * GET /api/clients/me
  * Retrieves the access token for the currently authenticated client.
- * Securely uses the email of the active Supabase session.
+ * Uses the custom JWT session cookie (independent of Supabase Auth).
  */
 export async function GET() {
   try {
-    const supabase = await createClient()
+    // 1. Verify session from custom JWT cookie
+    const session = await getClientSession()
 
-    // 1. Verify session
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user || !user.email) {
+    if (!session || !session.email) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -24,7 +22,7 @@ export async function GET() {
     const { data: client, error: clientError } = await supabaseAdmin
       .from('clients')
       .select('id, access_token')
-      .eq('email', user.email.toLowerCase().trim())
+      .eq('email', session.email.toLowerCase().trim())
       .maybeSingle()
 
     if (clientError) {

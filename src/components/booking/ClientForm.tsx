@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate, formatTime, formatPrice } from '@/lib/utils'
 import type { Service } from '@/lib/types'
 import type { ConfirmedBooking } from '@/hooks/useBooking'
-import type { Session } from '@supabase/supabase-js'
+import type { ClientSession } from '@/lib/auth/session'
 
 // --- Props ---
 
@@ -39,7 +38,7 @@ export function ClientForm({
   onConfirm,
   onBack,
 }: ClientFormProps) {
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<ClientSession | null>(null)
   const [loadingSession, setLoadingSession] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
@@ -91,26 +90,24 @@ export function ClientForm({
     }
   }, [services, date, slot, onConfirm])
 
-  // --- 2. Verificar sesión activa de Supabase (Google) al montar ---
+  // --- 2. Verificar sesión activa al montar (desde cookie JWT propia) ---
   useEffect(() => {
     async function checkSession() {
       try {
-        const supabase = createClient()
-        const { data: { session: activeSession } } = await supabase.auth.getSession()
+        const res = await fetch('/api/auth/me')
+        const data = await res.json()
+        const activeSession: ClientSession | null = data.user || null
         setSession(activeSession)
-        
-        if (activeSession?.user) {
-          const user = activeSession.user
-          const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
-          const email = user.email || ''
-          onChangeName(fullName)
-          onChangeEmail(email)
+
+        if (activeSession) {
+          onChangeName(activeSession.name)
+          onChangeEmail(activeSession.email)
 
           // Auto-confirmar si viene de la redirección de Google OAuth
           const autoConfirm = localStorage.getItem('gabygor_auto_confirm')
           if (autoConfirm === 'true') {
             localStorage.removeItem('gabygor_auto_confirm')
-            executeBooking(fullName, email)
+            executeBooking(activeSession.name, activeSession.email)
           }
         }
       } catch (err) {
@@ -119,54 +116,35 @@ export function ClientForm({
         setLoadingSession(false)
       }
     }
-    
+
     checkSession()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // --- 3. Guardar estado y redirigir a Google OAuth ---
-  const handleGoogleLogin = async () => {
-    try {
-      setLoadingSession(true)
-      
-      // Indicar que se autoconfirme el turno al retornar
-      localStorage.setItem('gabygor_auto_confirm', 'true')
+  const handleGoogleLogin = () => {
+    // Indicar que se autoconfirme el turno al retornar
+    localStorage.setItem('gabygor_auto_confirm', 'true')
 
-      // Persistir el progreso actual del flujo en localStorage
-      localStorage.setItem('gabygor_booking_state', JSON.stringify({
-        selectedServices: services,
-        selectedDate: date,
-        selectedSlot: slot,
-        step: 3
-      }))
+    // Persistir el progreso actual del flujo en localStorage
+    localStorage.setItem('gabygor_booking_state', JSON.stringify({
+      selectedServices: services,
+      selectedDate: date,
+      selectedSlot: slot,
+      step: 3
+    }))
 
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            prompt: 'select_account',
-          },
-        }
-      })
-
-      if (error) throw error
-    } catch (err) {
-      console.error('[ClientForm] Google login error:', err)
-      setApiError('No se pudo iniciar sesión con Google. Intentá de nuevo.')
-      setLoadingSession(false)
-    }
+    // Redirigir al flujo OAuth propio (sin Supabase)
+    window.location.href = '/api/auth/google?next=/'
   }
 
-  // --- 3.5 Cerrar sesión actual y redirigir inmediatamente a Google OAuth ---
+  // --- 3.5 Cerrar sesión actual y redirigir a Google OAuth ---
   const handleChangeAccount = async () => {
     try {
       setLoadingSession(true)
-      
-      const supabase = createClient()
-      await supabase.auth.signOut()
-      
+
+      // Destruir sesión actual
+      await fetch('/api/auth/signout', { method: 'POST' })
       setSession(null)
       onChangeName('')
       onChangeEmail('')
@@ -182,17 +160,7 @@ export function ClientForm({
         step: 3
       }))
 
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            prompt: 'select_account',
-          },
-        }
-      })
-
-      if (error) throw error
+      window.location.href = '/api/auth/google?next=/'
     } catch (err) {
       console.error('[ClientForm] Error changing account:', err)
       setApiError('No se pudo redirigir a Google. Intentá de nuevo.')
