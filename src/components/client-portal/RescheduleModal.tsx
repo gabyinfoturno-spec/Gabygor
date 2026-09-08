@@ -103,10 +103,12 @@ export function RescheduleModal({
         if (!res.ok) throw new Error('Error al obtener horarios')
         const data = await res.json()
         setSlots(
-          data.map((s: { slot_start: string; slot_end: string }) => ({
-            start: s.slot_start,
-            end: s.slot_end,
-          }))
+          data
+            .filter((s: { start: string; end: string; available: boolean }) => s.available)
+            .map((s: { start: string; end: string }) => ({
+              start: s.start,
+              end: s.end,
+            }))
         )
       } catch (err) {
         console.error(err)
