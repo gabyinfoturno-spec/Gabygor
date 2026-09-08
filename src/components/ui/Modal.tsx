@@ -9,7 +9,7 @@ export interface ModalProps {
   title?: string
   children: ReactNode
   /** Ancho máximo personalizado (por defecto md → 28rem) */
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl'
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
 }
 
 const maxWidthStyles: Record<string, string> = {
@@ -17,6 +17,8 @@ const maxWidthStyles: Record<string, string> = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
 }
 
 // ── Componente ───────────────────────────────────

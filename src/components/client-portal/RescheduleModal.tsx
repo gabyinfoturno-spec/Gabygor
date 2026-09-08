@@ -161,7 +161,7 @@ export function RescheduleModal({
   const availableDateStrings = availableDates.map((d) => d.available_date)
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reprogramar Turno" maxWidth="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Reprogramar Turno" maxWidth="3xl">
       <div className="space-y-6">
         <div>
           <p className="text-sm text-[var(--text-secondary)]">
@@ -181,45 +181,49 @@ export function RescheduleModal({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Calendar Picker */}
           <div>
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
               1. Seleccioná el Día
             </h3>
             {loadingDates ? (
-              <Skeleton className="h-64 w-full rounded-2xl" />
+              <Skeleton className="h-80 w-full rounded-2xl" />
             ) : (
-              <Calendar
-                availableDates={availableDateStrings}
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                minDate={minDate}
-                maxDate={maxDate}
-              />
+              <div className="scale-110 origin-top-left w-[90%]">
+                <Calendar
+                  availableDates={availableDateStrings}
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                  minDate={minDate}
+                  maxDate={maxDate}
+                />
+              </div>
             )}
           </div>
 
           {/* Time Picker */}
           <div>
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
               2. Seleccioná el Horario
             </h3>
             {!selectedDate ? (
-              <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-[var(--border-color)]">
+              <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-[var(--border-color)]">
                 <p className="text-xs text-[var(--text-secondary)]">
                   Elegí una fecha para ver horarios disponibles
                 </p>
               </div>
             ) : loadingSlots ? (
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-lg" />
                 ))}
               </div>
             ) : (
-              <TimeSlot
-                slots={slots}
-                selectedSlot={selectedSlot}
-                onSelectSlot={setSelectedSlot}
-              />
+              <div className="max-h-72 overflow-y-auto pr-1 space-y-2">
+                <TimeSlot
+                  slots={slots}
+                  selectedSlot={selectedSlot}
+                  onSelectSlot={setSelectedSlot}
+                />
+              </div>
             )}
           </div>
         </div>
