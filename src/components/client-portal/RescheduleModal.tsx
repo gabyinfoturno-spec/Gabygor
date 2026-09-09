@@ -232,13 +232,23 @@ export function RescheduleModal({
 
         {/* Selected Summary */}
         {selectedDate && selectedSlot && (
-          <div className="rounded-xl border border-[var(--gold-primary)]/30 bg-[var(--gold-primary)]/5 p-4">
-            <p className="text-sm text-[var(--text-primary)]">
-              Nuevo turno propuesto:{' '}
-              <strong className="text-[var(--gold-primary)]">
-                {formatDate(selectedDate)} a las {formatTime(selectedSlot.start)}
-              </strong>
-            </p>
+          <div className="flex items-center gap-4 rounded-xl border border-[var(--gold-primary)]/40 bg-[var(--gold-primary)]/8 px-5 py-4">
+            {/* Ícono */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--gold-primary)]/15">
+              <svg className="h-5 w-5 text-[var(--gold-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            {/* Texto */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--gold-primary)] opacity-80">
+                Nuevo turno propuesto
+              </p>
+              <p className="mt-0.5 text-base font-bold text-[var(--text-primary)]">
+                {formatDate(selectedDate)}{' '}
+                <span className="text-[var(--gold-primary)]">a las {formatTime(selectedSlot.start)}</span>
+              </p>
+            </div>
           </div>
         )}
 
