@@ -184,8 +184,15 @@ export function DateTimePicker({
             Fecha
           </h3>
           {loadingDates ? (
-            <div className="space-y-2">
-              <Skeleton className="h-64 w-full rounded-xl" />
+            <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]">
+              {/* Spinner */}
+              <div className="relative h-12 w-12">
+                <div className="absolute inset-0 rounded-full border-4 border-[var(--gold-primary)]/10" />
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-t-[var(--gold-primary)] border-r-transparent border-b-transparent border-l-transparent" />
+              </div>
+              <p className="text-xs font-medium text-[var(--text-muted)] tracking-wide uppercase">
+                Cargando fechas...
+              </p>
             </div>
           ) : (
             <Calendar
@@ -211,23 +218,15 @@ export function DateTimePicker({
               </p>
             </div>
           ) : loadingSlots ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24 mb-2" />
-                <div className="grid grid-cols-3 gap-2">
-                  <Skeleton className="h-10 rounded-lg" />
-                  <Skeleton className="h-10 rounded-lg" />
-                  <Skeleton className="h-10 rounded-lg" />
-                </div>
+            <div className="flex h-48 flex-col items-center justify-center gap-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] lg:h-64">
+              {/* Spinner */}
+              <div className="relative h-10 w-10">
+                <div className="absolute inset-0 rounded-full border-4 border-[var(--gold-primary)]/10" />
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-t-[var(--gold-primary)] border-r-transparent border-b-transparent border-l-transparent" />
               </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24 mb-2" />
-                <div className="grid grid-cols-3 gap-2">
-                  <Skeleton className="h-10 rounded-lg" />
-                  <Skeleton className="h-10 rounded-lg" />
-                  <Skeleton className="h-10 rounded-lg" />
-                </div>
-              </div>
+              <p className="text-xs font-medium text-[var(--text-muted)] tracking-wide uppercase">
+                Cargando horarios...
+              </p>
             </div>
           ) : slots.length === 0 ? (
             <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-[var(--border-color)] lg:h-64">
