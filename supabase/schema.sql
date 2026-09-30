@@ -1047,7 +1047,7 @@ INSERT INTO working_hours (day_of_week, is_working_day, start_time, end_time, in
 -- ------------------------------------------------------------
 INSERT INTO site_settings (setting_key, setting_value, setting_group) VALUES
   -- Encabezado (RF-28)
-  ('main_title', 'Gaby Gord', 'header'),
+  ('main_title', 'Gaby Gor', 'header'),
   ('subtitle', 'Barbería & Estilismo', 'header'),
   ('info_text', 'Reservá tu turno de forma rápida y sencilla', 'header'),
 

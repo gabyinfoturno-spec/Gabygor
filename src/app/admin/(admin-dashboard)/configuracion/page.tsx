@@ -378,7 +378,7 @@ export default function AdminSettingsPage() {
                 label="Instagram (ej: @barbero)"
                 value={barberInstagram}
                 onChange={(e) => setBarberInstagram(e.target.value)}
-                placeholder="@gabygord"
+                placeholder="@gabygor"
               />
             </div>
           </Card>
